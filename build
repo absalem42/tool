@@ -1,0 +1,14 @@
+#!/bin/bash
+
+# Get the directory where this script is located
+repoPath="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+echo "Building Security Tools Container..."
+docker build "$repoPath" -t security-tools
+
+if [ $? -eq 0 ]; then
+    echo "✓ Build successful!"
+else
+    echo "✗ Build failed"
+    exit 1
+fi

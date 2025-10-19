@@ -1,0 +1,3 @@
+#!/bin/bash
+
+docker run -it --name security-tools -d -v "$PWD:/home/security/work" security-tools "/bin/zsh"

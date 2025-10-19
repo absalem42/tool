@@ -1,0 +1,28 @@
+#!/bin/bash
+
+# Start Docker if not running
+docker ps > /dev/null 2>&1
+if [ ! $? -eq 0 ]; then
+    open -a Docker
+    echo -n "Waiting for Docker to start "
+    while true; do
+        docker ps > /dev/null 2>&1
+        if [ $? -eq 0 ]; then
+            echo
+            break
+        else
+            echo -n "."
+            sleep 1
+        fi
+    done
+fi
+
+# Check if image exists
+if ! docker images | grep -q "security-tools"; then
+    echo "Security Tools image not found. Building..."
+    repoPath="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    cd "$repoPath"
+    ./build
+fi
+
+docker run -it --name security-tools --rm -v "$PWD:/home/security/work" security-tools "/bin/zsh"

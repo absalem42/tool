@@ -1,0 +1,83 @@
+#!/bin/bash
+
+# Get the directory where this script is located
+repoPath="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Make scripts executable
+chmod a+x "$repoPath/stop" "$repoPath/start" "$repoPath/run" "$repoPath/bgnd" "$repoPath/build"
+
+# Colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+GRAY='\033[0;37m'
+NC='\033[0m'
+
+echo -e "${YELLOW}Installing Security Tools Container 🔐${NC}"
+
+# Check if Docker is installed
+if ! command -v docker &> /dev/null; then
+    echo -e "${RED}Docker is not installed. Please install Docker first.${NC}"
+    exit 1
+fi
+
+# Start Docker if not running
+if ! docker ps > /dev/null 2>&1; then
+    echo -e "${YELLOW}Starting Docker...${NC}"
+    open -a Docker
+    
+    # Wait for Docker to start
+    while ! docker ps > /dev/null 2>&1; do
+        echo -e "${YELLOW}Waiting for Docker to start...${NC}"
+        sleep 2
+    done
+fi
+
+echo -e "${GREEN}Docker is running ✓${NC}"
+
+# Add scripts to PATH
+echo -e "${YELLOW}Do you want to add the tools to your PATH? (y/n)${NC}"
+read addpath
+
+if [ "$addpath" = "y" ] || [ "$addpath" = "Y" ]; then
+    # Detect shell
+    if [ -n "$ZSH_VERSION" ] || [ -f "$HOME/.zshrc" ]; then
+        SHELL_RC="$HOME/.zshrc"
+    else
+        SHELL_RC="$HOME/.bashrc"
+    fi
+    
+    # Check if path already exists
+    if grep -q "security-tools" "$SHELL_RC" 2>/dev/null || grep -q "$repoPath" "$SHELL_RC" 2>/dev/null; then
+        echo -e "${GREEN}Path already in $SHELL_RC ✓${NC}"
+    else
+        echo -e "${GRAY}Adding path to $SHELL_RC${NC}"
+        echo "" >> "$SHELL_RC"
+        echo "# Security Tools Container" >> "$SHELL_RC"
+        echo "export PATH=\$PATH:$repoPath" >> "$SHELL_RC"
+        echo -e "${GREEN}Path added to $SHELL_RC ✓${NC}"
+        echo -e "${YELLOW}Please run: source $SHELL_RC${NC}"
+    fi
+fi
+
+# Build the Docker image
+if ! docker images | grep -q "security-tools"; then
+    echo -e "${YELLOW}Building Security Tools Container...${NC}"
+    cd "$repoPath"
+    docker build -t security-tools .
+    
+    if [ $? -eq 0 ]; then
+        echo -e "${GREEN}✓ Security Tools Container built successfully!${NC}"
+        echo -e "${GREEN}Ready to hack! 🔐😇${NC}"
+        echo ""
+        echo -e "${YELLOW}Usage:${NC}"
+        echo -e "  ${GRAY}cd to your work directory${NC}"
+        echo -e "  ${GRAY}Run: start${NC}"
+    else
+        echo -e "${RED}Failed to build container${NC}"
+        exit 1
+    fi
+else
+    echo -e "${GREEN}Security Tools Container already built ✓${NC}"
+    echo -e "${GREEN}Everything is Fine... Ready to hack! 😇${NC}"
+fi
