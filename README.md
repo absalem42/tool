@@ -13,7 +13,7 @@ A lightweight, fast-building Docker container packed with essential security too
 - **🎯 CTF Ready**: Pre-configured with essential tools and wordlists
 - **🔧 Custom Aliases**: Convenient shortcuts for common tasks
 - **💾 Persistent Storage**: Volume mounting for your work directory
-- **🖥️ CPU Only**: No GPU required - hashcat runs in CPU mode for maximum compatibility across all systems
+- **🖥️ CPU Only**: No GPU required - hashcat runs in CPU mode for compatibility across systems without dedicated GPU hardware
 - **🐚 Enhanced Shell**: Zsh with custom red `[SECURITY]` prompt
 
 ## 🛠️ Included Tools
@@ -51,7 +51,7 @@ git clone https://github.com/absalem42/tool.git
 cd tool
 ```
 
-> **Note:** Replace the repository URL with your actual GitHub repository URL if different.
+> **Note:** Replace `absalem42/tool` with your actual GitHub username and repository name.
 
 2. Run the install script:
 ```bash
@@ -209,7 +209,7 @@ hashcat -m 0 -a 0 hash.txt /usr/share/wordlists/passwords.txt --force
 hashcat -m 1400 -a 0 hash.txt /usr/share/wordlists/passwords.txt --force
 ```
 
-> **Note:** `rockyou.txt` is a symlink to `passwords.txt` which contains ~40 common passwords. For larger wordlists, add your own as described in the "Adding Custom Wordlists" section.
+> **Note:** `rockyou.txt` is a symlink to `passwords.txt` which contains ~40 common passwords. For larger wordlists, add your own as described in the Adding Custom Wordlists section.
 
 **NTLM hash cracking:**
 ```bash
