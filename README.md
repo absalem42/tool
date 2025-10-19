@@ -13,7 +13,7 @@ A lightweight, fast-building Docker container packed with essential security too
 - **🎯 CTF Ready**: Pre-configured with essential tools and wordlists
 - **🔧 Custom Aliases**: Convenient shortcuts for common tasks
 - **💾 Persistent Storage**: Volume mounting for your work directory
-- **🖥️ CPU Only**: No GPU required (hashcat runs in CPU mode)
+- **🖥️ CPU Only**: No GPU required - hashcat runs in CPU mode for maximum compatibility across all systems
 - **🐚 Enhanced Shell**: Zsh with custom red `[SECURITY]` prompt
 
 ## 🛠️ Included Tools
@@ -50,6 +50,8 @@ Located in `/usr/share/wordlists/`:
 git clone https://github.com/absalem42/tool.git
 cd tool
 ```
+
+> **Note:** Replace the repository URL with your actual GitHub repository URL if different.
 
 2. Run the install script:
 ```bash
@@ -204,8 +206,10 @@ hashcat -m 0 -a 0 hash.txt /usr/share/wordlists/passwords.txt --force
 
 **SHA256 cracking:**
 ```bash
-hashcat -m 1400 -a 0 hash.txt /usr/share/wordlists/rockyou.txt --force
+hashcat -m 1400 -a 0 hash.txt /usr/share/wordlists/passwords.txt --force
 ```
+
+> **Note:** `rockyou.txt` is a symlink to `passwords.txt` which contains ~40 common passwords. For larger wordlists, add your own as described in the "Adding Custom Wordlists" section.
 
 **NTLM hash cracking:**
 ```bash
@@ -241,6 +245,10 @@ docker cp /path/to/your/wordlist.txt security-tools:/usr/share/wordlists/custom.
 Modify the start script or run with custom mount:
 
 ```bash
+# Stop existing container first if running
+./stop
+
+# Run with custom wordlist mount
 docker run -it --name security-tools --rm \
   -v "$PWD:/home/security/work" \
   -v "/path/to/wordlists:/usr/share/custom-wordlists" \
@@ -331,14 +339,19 @@ ffuf -u http://target.com/FUZZ -w /usr/share/wordlists/web-common.txt -o scan-re
 **Issue:** `Cannot connect to the Docker daemon`
 
 **Solution:**
+
+On macOS:
 ```bash
-# On macOS
 open -a Docker
+```
 
-# On Linux
+On Linux:
+```bash
 sudo systemctl start docker
+```
 
-# Verify Docker is running
+Verify Docker is running:
+```bash
 docker ps
 ```
 
