@@ -1,10 +1,11 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -euo pipefail
 
 # Get the directory where this script is located
 repoPath="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Make scripts executable
-chmod a+x "$repoPath/stop" "$repoPath/start" "$repoPath/run" "$repoPath/bgnd" "$repoPath/build"
+chmod a+x "$repoPath/stop" "$repoPath/start" "$repoPath/run" "$repoPath/bgnd" "$repoPath/build" 2>/dev/null || true
 
 # Colors
 RED='\033[0;31m'
@@ -24,8 +25,13 @@ fi
 # Start Docker if not running
 if ! docker ps > /dev/null 2>&1; then
     echo -e "${YELLOW}Starting Docker...${NC}"
-    open -a Docker
-    
+    # Try macOS opener, otherwise attempt systemd on Linux
+    if command -v open &> /dev/null; then
+        open -a Docker 2>/dev/null || true
+    elif command -v systemctl &> /dev/null; then
+        sudo systemctl start docker 2>/dev/null || true
+    fi
+
     # Wait for Docker to start
     while ! docker ps > /dev/null 2>&1; do
         echo -e "${YELLOW}Waiting for Docker to start...${NC}"
@@ -35,32 +41,56 @@ fi
 
 echo -e "${GREEN}Docker is running ✓${NC}"
 
-# Add scripts to PATH
-echo -e "${YELLOW}Do you want to add the tools to your PATH? (y/n)${NC}"
-read addpath
+# Default behavior: add the repo to the user's PATH without prompting.
+# Override by setting ADD_TO_PATH to 'n', 'no', or '0' in the environment.
+addpath="${ADD_TO_PATH:-y}"
 
-if [ "$addpath" = "y" ] || [ "$addpath" = "Y" ]; then
-    # Detect shell
-    if [ -n "$ZSH_VERSION" ] || [ -f "$HOME/.zshrc" ]; then
+if [ "${addpath}" = "y" ] || [ "${addpath}" = "Y" ] || [ "${addpath}" = "yes" ] || [ "${addpath}" = "1" ]; then
+    # Prefer zsh rc if zsh is installed or file exists, otherwise bashrc
+    if [ -n "${ZSH_VERSION:-}" ] || [ -f "$HOME/.zshrc" ]; then
         SHELL_RC="$HOME/.zshrc"
+        IS_ZSH=1
     else
         SHELL_RC="$HOME/.bashrc"
+        IS_ZSH=0
     fi
-    
-    # Check if path already exists
-    if grep -q "security-tools" "$SHELL_RC" 2>/dev/null || grep -q "$repoPath" "$SHELL_RC" 2>/dev/null; then
+
+    # If the path already exists in the chosen rc file, report and skip
+    if grep -qF "$repoPath" "$SHELL_RC" 2>/dev/null || grep -qF "security-tools" "$SHELL_RC" 2>/dev/null; then
         echo -e "${GREEN}Path already in $SHELL_RC ✓${NC}"
     else
         echo -e "${GRAY}Adding path to $SHELL_RC${NC}"
-        echo "" >> "$SHELL_RC"
-        echo "# Security Tools Container" >> "$SHELL_RC"
-        echo "export PATH=\$PATH:$repoPath" >> "$SHELL_RC"
+        if [ "$IS_ZSH" -eq 1 ]; then
+            # Append a safe block that only runs when actually in zsh (prevents errors when sourced by bash)
+            cat >> "$SHELL_RC" <<EOF
+
+# Security Tools Container - added by install script
+# Only update PATH when running zsh to avoid sourcing errors from other shells
+if [ -n "\$ZSH_VERSION" ]; then
+  export PATH="\$PATH:$repoPath"
+fi
+EOF
+        else
+            # bash or POSIX shells: append a simple export
+            cat >> "$SHELL_RC" <<EOF
+
+# Security Tools Container - added by install script
+export PATH="\$PATH:$repoPath"
+EOF
+        fi
         echo -e "${GREEN}Path added to $SHELL_RC ✓${NC}"
-        echo -e "${YELLOW}Please run: source $SHELL_RC${NC}"
+        echo -e "${YELLOW}To use the new PATH in this session run:${NC}"
+        if [ "$IS_ZSH" -eq 1 ]; then
+            echo -e "  ${GRAY}source $SHELL_RC${NC}"
+        else
+            echo -e "  ${GRAY}source $SHELL_RC${NC}"
+        fi
     fi
+else
+    echo -e "${GRAY}Skipping adding to PATH (ADD_TO_PATH set to no)${NC}"
 fi
 
-# Build the Docker image
+# Build the Docker image if not present
 if ! docker images | grep -q "security-tools"; then
     echo -e "${YELLOW}Building Security Tools Container...${NC}"
     cd "$repoPath"
