@@ -51,30 +51,42 @@ git clone https://github.com/absalem42/tool.git
 cd tool
 ```
 
-
-2. Run the install script:
+2. Build and set everything up with a single command:
 ```bash
-chmod +x install
-./install
+make
 ```
 
-The install script will:
+The Makefile will:
 - Check for Docker installation
 - Start Docker if not running
-- Build the security-tools image
-- Optionally add scripts to your PATH
+- Build the `security-tools` image
+- Optionally add helper targets or scripts to your PATH (depending on the Makefile configuration)
 
 ### Manual Install
 
-If you prefer manual setup:
+If you prefer manual setup or want to use individual targets, use the Makefile targets:
 
 ```bash
-# Make scripts executable
-chmod +x build start stop run bgnd install
-
 # Build the Docker image
-./build
+make build
+
+# Start an interactive container
+make start
+
+# Stop and remove container
+make stop
+
+# Run the container in background
+make bgnd
+
+# Execute a command in a running container
+make run CMD="ls -la"
+
+# Full install/setup (if provided by the Makefile)
+make install
 ```
+
+You can view the Makefile to see available targets and adjust them as needed.
 
 ## 🚀 Quick Start
 
@@ -84,7 +96,7 @@ Navigate to your work directory and start the container:
 
 ```bash
 cd /path/to/your/work
-./start
+make start
 ```
 
 This starts an interactive shell with your current directory mounted at `/home/security/work`.
@@ -94,7 +106,7 @@ This starts an interactive shell with your current directory mounted at `/home/s
 To run the container in the background:
 
 ```bash
-./bgnd
+make bgnd
 ```
 
 ### Executing Commands
@@ -102,13 +114,13 @@ To run the container in the background:
 Execute commands in a running container:
 
 ```bash
-./run <command>
+make run CMD="<your command here>"
 ```
 
 ### Stopping the Container
 
 ```bash
-./stop
+make stop
 ```
 
 ## 📖 Usage Examples
@@ -241,13 +253,13 @@ docker cp /path/to/your/wordlist.txt security-tools:/usr/share/wordlists/custom.
 
 ### Method 2: Mount a Wordlist Directory
 
-Modify the start script or run with custom mount:
+Modify the start behavior or run with custom mount:
 
 ```bash
 # Stop existing container first if running
-./stop
+make stop
 
-# Run with custom wordlist mount
+# Run with custom wordlist mount (example with docker run)
 docker run -it --name security-tools --rm \
   -v "$PWD:/home/security/work" \
   -v "/path/to/wordlists:/usr/share/custom-wordlists" \
@@ -264,7 +276,7 @@ COPY my-wordlist.txt /usr/share/wordlists/my-wordlist.txt
 
 Then rebuild:
 ```bash
-./build
+make build
 ```
 
 ### Method 4: Download During Runtime
@@ -282,19 +294,19 @@ wget https://example.com/wordlist.txt
 
 ```bash
 # Build the container
-./build
+make build
 
 # Start interactive shell
-./start
+make start
 
 # Run in background
-./bgnd
+make bgnd
 
 # Execute command in running container
-./run ls -la
+make run CMD="ls -la"
 
 # Stop and remove container
-./stop
+make stop
 ```
 
 ### Built-in Aliases
@@ -361,7 +373,7 @@ docker ps
 **Solution:**
 ```bash
 # Stop and remove existing container
-./stop
+make stop
 
 # Or manually
 docker stop security-tools
@@ -374,7 +386,8 @@ docker rm security-tools
 
 **Solution:**
 ```bash
-chmod +x build start stop run bgnd install
+# If any helper scripts exist and need executable permissions
+chmod +x scripts/*
 ```
 
 ### hashcat: No devices found
@@ -411,7 +424,7 @@ docker volume prune
 ls -la /usr/share/wordlists/
 
 # If empty, rebuild the container
-./build
+make build
 ```
 
 ### Changes Don't Persist
@@ -439,16 +452,20 @@ The Dockerfile builds the container with these steps:
 
 Build time: ~15-20 seconds (after Docker layer caching)
 
-## 📜 Scripts Reference
+## 📜 Scripts / Makefile Reference
 
-| Script | Purpose |
+Use the Makefile targets to perform common actions. Typical targets include:
+
+| Target | Purpose |
 |--------|---------|
-| `build` | Builds the Docker image with tag `security-tools` |
-| `start` | Starts an interactive container with current directory mounted |
-| `stop` | Stops and removes the security-tools container |
-| `run` | Executes a command inside the running container |
-| `bgnd` | Runs the container in background/detached mode |
-| `install` | Complete setup: makes scripts executable, builds image, optionally adds to PATH |
+| `make build` | Builds the Docker image with tag `security-tools` |
+| `make start` | Starts an interactive container with current directory mounted |
+| `make stop` | Stops and removes the `security-tools` container |
+| `make run` | Executes a command inside the running container (use `CMD="..."`) |
+| `make bgnd` | Runs the container in background/detached mode |
+| `make install` | Complete setup: builds image and optionally configures helper targets or PATH |
+
+Check the Makefile for exact target names and any additional options.
 
 ## 🤝 Contributing
 
@@ -489,7 +506,7 @@ SOFTWARE.
 
 ## ⚠️ Disclaimer
 
-This tool is intended for legal security testing and educational purposes only. Users are responsible for complying with applicable laws and regulations. The authors are not responsible for any misuse or damage caused by this tool.
+This tool is intended for legal security testing and educational purposes only. Users are responsible for complying with applicable laws and regulations. The authors are not responsible for any misuse.
 
 ## 🌟 Support
 
