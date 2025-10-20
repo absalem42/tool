@@ -51,7 +51,6 @@ git clone https://github.com/absalem42/tool.git
 cd tool
 ```
 
-> **Note:** Replace `absalem42/tool` with your actual GitHub username and repository name.
 
 2. Run the install script:
 ```bash
